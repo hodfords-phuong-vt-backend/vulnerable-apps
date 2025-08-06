@@ -1,0 +1,23 @@
+# Gradle build output
+/build/
+/.gradle/
+
+# Gradle Wrapper
+/gradle/wrapper/gradle-wrapper.jar
+
+# IDE files
+*.iml
+.idea/
+*.ipr
+*.iws
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Kotlin/Java
+/out/
