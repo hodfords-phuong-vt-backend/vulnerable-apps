@@ -1,63 +1,69 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import { exec } from 'child_process'; // ❌ unused import
+import { exec } from 'child_process'; // ❌ 1. Unsafe Command Execution
+import * as fs from 'fs'; // ❌ 2. Blocking I/O
+import * as path from 'path';
 
 @Injectable()
 export class AppService {
-  // ❌ 1. Hardcoded secret
-  private readonly jwtSecret = 'hardcoded-jwt-secret';
 
-  // ❌ 2. Hardcoded password
-  private readonly dbPassword = 'supersecret123';
+  // ❌ 3. Hardcoded Secret Key: Lỗi bảo mật nghiêm trọng
+  private readonly SECRET_KEY = 'my-super-secret-key-that-is-not-secure';
 
-  // ❌ 3. Unused private variable
-  private unusedVar = 'this does nothing';
+  // ❌ 4. Hardcoded Password: Thông tin nhạy cảm được mã hóa cứng
+  private readonly DB_PASSWORD = 'password123';
 
+  // ❌ 5. Unused private variable: Biến không được sử dụng
+  private unusedVar = 'this variable does nothing';
+
+  // ❌ 6. Logging sensitive info: In thông tin nhạy cảm ra console
   getHello(): string {
-    // ❌ 4. Logging sensitive info
-    const password = '123456';
-    console.log('User password:', password);
-
-    // ❌ 5. Returning unfiltered input (simulate XSS risk)
-    const userInput = '<script>alert(1)</script>';
-    return `<div>${userInput}</div>`; // ❌ 6. XSS
+    console.log('Logging sensitive info:', this.DB_PASSWORD);
+    // ❌ 7. Cross-Site Scripting (XSS): Trả về input trực tiếp
+    const userInput = '<script>alert("XSS Attack!")</script>';
+    return `<div>Hello: ${userInput}</div>`;
   }
 
-  // ❌ 7. Empty catch block
+  // ❌ 8. Empty Catch Block: Bỏ qua lỗi một cách âm thầm
   dangerousOperation(): void {
     try {
-      throw new Error('Simulate error');
+      throw new Error('This error will be silently ignored');
     } catch (e) {
-      // silently ignored
+      // Catch block is empty
     }
   }
 
-  // ❌ 8. Exposing internal error
+  // ❌ 9. Exposing internal error: Tiết lộ thông tin chi tiết về lỗi
   risky(): string {
     try {
-      throw new Error('System crashed');
+      throw new Error('System crashed due to internal logic');
     } catch (e) {
       return e.message;
     }
   }
 
-  // ❌ 9. Inefficient loop
+  // ❌ 10. Inefficient loop: Vòng lặp lồng nhau có hiệu suất kém (Complexity)
   loop(): void {
-    const arr = [1, 2, 3, 4, 5];
+    const arr = [1, 2, 3];
     for (let i = 0; i < arr.length; i++) {
       for (let j = 0; j < arr.length; j++) {
-        console.log(arr[i], arr[j]);
+        // ...
       }
     }
   }
 
-  // ❌ 10. Blocking I/O
+  // ❌ 11. Blocking I/O: Sử dụng hàm đồng bộ có thể gây tắc nghẽn server
   readConfig(): string {
-    const data = fs.readFileSync('/etc/app/config.json', 'utf-8'); // ❌ hardcoded path
+    // SonarQube sẽ phát hiện readFileSync
+    const data = fs.readFileSync('config.json', 'utf-8');
     return data;
   }
 
-  // ❌ 11. Catching broad exception type
+  // ❌ 12. Insecure `eval` usage: Sử dụng eval với input từ người dùng
+  runEval(userInput: string): any {
+    return eval(userInput);
+  }
+
+  // ❌ 13. Catching broad exception type: Bắt lỗi chung chung
   handleAnything(): void {
     try {
       JSON.parse('{');
@@ -66,17 +72,30 @@ export class AppService {
     }
   }
 
-  // ❌ 12. Insecure eval usage
-  runEval(userInput: string): any {
-    return eval(userInput);
+  // ❌ 14. SQL Injection: Tạo chuỗi truy vấn SQL từ input người dùng
+  searchUser(username: string): string {
+    const query = `SELECT * FROM users WHERE username = '${username}'`;
+    return query;
   }
 
-  // ❌ 13. Deprecated / bad typing
-  getBody(body: any): any {
-    return body;
+  // ❌ 15. Command Injection: Chạy lệnh hệ thống với input không an toàn
+  runCommand(host: string): void {
+    exec(`ping -c 1 ${host}`);
   }
 
-  // ❌ 14. Too many responsibilities
+  // ❌ 16. Duplicated code: Đoạn mã bị lặp lại
+  calculateTax(): number {
+    const tax = 10 * 0.08;
+    return tax;
+  }
+
+  // ❌ 17. Duplicated code again: Lặp lại đoạn mã
+  calculateTaxAgain(): number {
+    const tax = 10 * 0.08;
+    return tax;
+  }
+
+  // ❌ 18. Too many responsibilities: Vi phạm nguyên tắc SRP
   processUser(): void {
     this.validateUser();
     this.saveUser();
@@ -84,47 +103,12 @@ export class AppService {
     this.log();
   }
 
-  private validateUser() {
-    console.log('validating...');
-  }
+  private validateUser() { /* ... */ }
+  private saveUser() { /* ... */ }
+  private sendEmail() { /* ... */ }
+  private log() { /* ... */ }
 
-  private saveUser() {
-    console.log('saving...');
-  }
-
-  private sendEmail() {
-    console.log('sending email...');
-  }
-
-  private log() {
-    console.log('logging...');
-  }
-
-  // ❌ 15. SQL Injection simulation
-  searchUser(username: string): string {
-    const query = `SELECT * FROM users WHERE username = '${username}'`;
-    return query;
-  }
-
-  // ❌ 16. Duplicated code
-  calculateTax(): number {
-    const tax = 10 * 0.08;
-    return tax;
-  }
-
-  // ❌ duplicated again
-  calculateTaxAgain(): number {
-    const tax = 10 * 0.08;
-    return tax;
-  }
-
-  // ❌ 17. Disabled rule
-  // eslint-disable-next-line no-console
-  debug() {
-    console.log('debug mode on');
-  }
-
-  // ❌ 18. High cyclomatic complexity
+  // ❌ 19. High cyclomatic complexity: Logic phức tạp, khó đọc/bảo trì
   complexDecision(a: number, b: number, c: number): string {
     if (a > 0 && b < 10) {
       if (c > 5) {
@@ -139,13 +123,8 @@ export class AppService {
     }
   }
 
-  // ❌ 19. Deprecated API or dangerous type use
-  handleInput(input: any): any {
-    return input;
-  }
-
-  // ❌ 20. Exposing secret in response
-  getSecret(): string {
-    return `Secret: ${this.jwtSecret}`;
+  // ❌ 20. Dangerous type use: Sử dụng kiểu 'any' cho input
+  handleInput(body: any): any {
+    return body;
   }
 }
